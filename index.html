@@ -95,6 +95,10 @@
   .data-io-btn:hover{background:var(--surface-hover);}
   .danger-btn{width:100%;margin-top:16px;border-color:var(--danger);color:var(--danger);}
   .danger-btn:hover{background:rgba(193,68,58,0.08);}
+  .settings-trigger-btn{
+    width:100%;margin-top:24px;padding:12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    color:var(--text-muted);font-family:var(--font-display);font-size:13px;
+  }
 
   /* random pick card */
   .random-card{margin-top:16px;border:1px solid var(--border);border-radius:20px;padding:16px;background:var(--surface);}
@@ -380,6 +384,9 @@
     },
     unlock: function(size, color){
       return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.8"/></svg>';
+    },
+    settings: function(size, color){
+      return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.65a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>';
     }
   };
 
@@ -402,7 +409,9 @@
     chordDraft: null,
     chordLockDraft: null,
     chordQuery: '',
+    settingsOpen: false,
     chordExpanded: false,
+    chordReturnHome: false,
     toastMsg: null,
     randomFrom: 'S',
     randomTo: 'D',
@@ -679,6 +688,7 @@
     state.chordSongId = null;
     state.chordDraft = null;
     state.chordLockDraft = null;
+    state.settingsOpen = false;
     loadSongsForProfile(0);
     state.toastMsg = 'すべてのデータを削除しました';
     clearTimeout(toastTimerId);
@@ -790,8 +800,9 @@
       listHtml = '<div class="list-empty"><p>' + (state.songs.length === 0 ? 'まだ曲が登録されていません' : '一致する曲が見つかりません') + '</p>' +
         '<p>' + (state.songs.length === 0 ? '曲が登録されると、ここに一覧が表示されます' : '検索キーワードを変えてみてください') + '</p></div>';
     } else {
+      var searching = !!state.query.trim();
       listHtml = grouped.map(function(g){
-        var collapsed = !!state.collapsedRanks[g.rank.key];
+        var collapsed = searching ? false : !!state.collapsedRanks[g.rank.key];
         var body = collapsed ? '' : '<div class="rank-group-body">' + g.items.map(renderSongCard).join('') + '</div>';
         return '<div class="rank-group">' +
           '<button class="rank-group-head" data-action="toggle-rank" data-key="' + g.rank.key + '">' +
@@ -842,8 +853,18 @@
       '<button class="data-io-btn" data-action="export-data">' + ICONS.download(16, COLORS.text) + '<span>エクスポート</span></button>' +
       '<button class="data-io-btn" data-action="trigger-import">' + ICONS.upload(16, COLORS.text) + '<span>インポート</span></button>' +
       '</div>' +
-      '<button class="data-io-btn danger-btn" data-action="reset-all-data">' + ICONS.trash(16, COLORS.danger) + '<span>このパソコンのデータをすべて削除</span></button>' +
+      '<button class="settings-trigger-btn" data-action="open-settings" aria-label="設定">' + ICONS.settings(18, COLORS.textMuted) + '<span>設定</span></button>' +
       '<input type="file" id="import-file-input" accept="application/json,.json" style="display:none">';
+  }
+
+  function renderSettingsModal(){
+    if (!state.settingsOpen) return '';
+    return '<div class="modal-overlay" data-action="overlay-close" data-target="settings">' +
+      '<div class="modal-sheet" data-stop="1">' +
+      '<h2 class="modal-title" style="margin-bottom:16px">設定</h2>' +
+      '<button class="data-io-btn danger-btn" data-action="reset-all-data">' + ICONS.trash(16, COLORS.danger) + '<span>このパソコンのデータをすべて削除</span></button>' +
+      '<button class="btn-outline" style="width:100%;margin-top:20px;padding:10px 0;border-radius:12px;" data-action="close-settings">閉じる</button>' +
+      '</div></div>';
   }
 
   function renderChordsTab(){
@@ -1000,6 +1021,7 @@
 
     html += renderFormModal();
     html += renderProfileModal();
+    html += renderSettingsModal();
     if (state.toastMsg){
       html += '<div class="save-toast">' + escapeHtml(state.toastMsg) + '</div>';
     }
@@ -1039,13 +1061,14 @@
     if (action === 'overlay-close'){
       if (e.target !== target) return;
       if (target.dataset.target === 'form') closeForm();
+      else if (target.dataset.target === 'settings'){ state.settingsOpen = false; render(); }
       else { state.switchingProfile = false; render(); }
       return;
     }
     if (action === 'set-tab'){ setActiveTab(target.dataset.tab); return; }
     if (action === 'toggle-rank'){ toggleRank(target.dataset.key); return; }
     if (action === 'toggle-song'){ toggleSongExpand(target.dataset.id); return; }
-    if (action === 'open-chord-song'){ state.chordSongId = target.dataset.id; state.chordDraft = null; state.chordLockDraft = null; state.chordExpanded = false; render(); return; }
+    if (action === 'open-chord-song'){ state.chordSongId = target.dataset.id; state.chordDraft = null; state.chordLockDraft = null; state.chordExpanded = false; state.chordReturnHome = false; render(); return; }
     if (action === 'toggle-chord-fav'){
       var favId = target.dataset.id;
       persistSongs(state.songs.map(function(s){
@@ -1057,7 +1080,12 @@
       render();
       return;
     }
-    if (action === 'close-chord-song'){ state.chordSongId = null; state.chordDraft = null; state.chordLockDraft = null; state.chordExpanded = false; render(); return; }
+    if (action === 'close-chord-song'){
+      state.chordSongId = null; state.chordDraft = null; state.chordLockDraft = null; state.chordExpanded = false;
+      if (state.chordReturnHome){ state.activeTab = 'home'; state.chordReturnHome = false; }
+      render();
+      return;
+    }
     if (action === 'clear-chord-text'){ state.chordDraft = ''; render(); return; }
     if (action === 'toggle-chord-expand'){ state.chordExpanded = !state.chordExpanded; render(); return; }
     if (action === 'save-chord-text'){ updateSongChordText(target.dataset.id, state.chordDraft, state.chordLockDraft); showSaveToast(); render(); return; }
@@ -1065,6 +1093,8 @@
     if (action === 'save-all'){ persistSongs(state.songs); showSaveToast(); render(); return; }
     if (action === 'export-data'){ exportAllData(); return; }
     if (action === 'reset-all-data'){ resetAllData(); return; }
+    if (action === 'open-settings'){ state.settingsOpen = true; render(); return; }
+    if (action === 'close-settings'){ state.settingsOpen = false; render(); return; }
     if (action === 'trigger-import'){
       var inputEl = document.getElementById('import-file-input');
       if (inputEl) inputEl.click();
@@ -1077,6 +1107,7 @@
       state.chordDraft = null;
       state.chordLockDraft = null;
       state.chordExpanded = true;
+      state.chordReturnHome = true;
       render();
       return;
     }
