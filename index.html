@@ -903,7 +903,7 @@
       html += '<header class="app-header"><div class="pick-wrap">' + ICONS.pick(36, COLORS.gold) + '</div>' +
         '<div class="head-text"><h1 class="app-title truncate">' + (hasProfile ? escapeHtml(profileDisplayName(state.profileIndex)) + 'の弾き込みノート' : '弾き込みノート') + '</h1>' +
         '<p class="app-sub">曲ごとの弾き込み具合を、コード・ストローク・リズム・アルペジオの4視点で記録する</p>' +
-        (state.profileLoaded && hasProfile ? '<button class="switch-link" data-action="switch-profile-open">' + ICONS.pencil(12, COLORS.gold) + '<span>ユーザーを切り替え</span></button>' : '') +
+        (state.profileLoaded && hasProfile && state.activeTab !== 'chords' ? '<button class="switch-link" data-action="switch-profile-open">' + ICONS.pencil(12, COLORS.gold) + '<span>ユーザーを切り替え</span></button>' : '') +
         '</div></header>';
     }
 
