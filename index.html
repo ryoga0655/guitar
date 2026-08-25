@@ -93,6 +93,8 @@
     font-family:var(--font-display);font-weight:700;font-size:13px;
   }
   .data-io-btn:hover{background:var(--surface-hover);}
+  .danger-btn{width:100%;margin-top:16px;border-color:var(--danger);color:var(--danger);}
+  .danger-btn:hover{background:rgba(193,68,58,0.08);}
 
   /* random pick card */
   .random-card{margin-top:16px;border:1px solid var(--border);border-radius:20px;padding:16px;background:var(--surface);}
@@ -313,6 +315,9 @@
   }
   function storageSet(key, value){
     try { localStorage.setItem(key, value); return true; } catch(e){ return false; }
+  }
+  function storageRemove(key){
+    try { localStorage.removeItem(key); } catch(e){ /* ignore */ }
   }
 
   var ICONS = {
@@ -662,6 +667,25 @@
     reader.readAsText(file);
   }
 
+  // Wipes only this browser's saved data (song lists, profile names) — the
+  // phone's own copy is a separate localStorage and is untouched by this.
+  function resetAllData(){
+    if (!window.confirm('このパソコンに保存されているデータをすべて削除します。この操作は取り消せません。よろしいですか?')) return;
+    for (var i = 0; i < PROFILE_COUNT; i++) storageRemove('songs:slot' + i);
+    storageRemove('profileNames');
+    storageRemove('currentProfileIndex');
+    state.profileNames = ['', '', ''];
+    state.profileIndex = 0;
+    state.chordSongId = null;
+    state.chordDraft = null;
+    state.chordLockDraft = null;
+    loadSongsForProfile(0);
+    state.toastMsg = 'すべてのデータを削除しました';
+    clearTimeout(toastTimerId);
+    toastTimerId = setTimeout(function(){ state.toastMsg = null; render(); }, 1600);
+    render();
+  }
+
   function renderStarInput(value, size, dataAttrs){
     var html = '<div class="star-input">';
     for (var i = 1; i <= 5; i++){
@@ -818,6 +842,7 @@
       '<button class="data-io-btn" data-action="export-data">' + ICONS.download(16, COLORS.text) + '<span>エクスポート</span></button>' +
       '<button class="data-io-btn" data-action="trigger-import">' + ICONS.upload(16, COLORS.text) + '<span>インポート</span></button>' +
       '</div>' +
+      '<button class="data-io-btn danger-btn" data-action="reset-all-data">' + ICONS.trash(16, COLORS.danger) + '<span>このパソコンのデータをすべて削除</span></button>' +
       '<input type="file" id="import-file-input" accept="application/json,.json" style="display:none">';
   }
 
@@ -1039,6 +1064,7 @@
     if (action === 'toggle-chord-lock'){ state.chordLockDraft = !state.chordLockDraft; render(); return; }
     if (action === 'save-all'){ persistSongs(state.songs); showSaveToast(); render(); return; }
     if (action === 'export-data'){ exportAllData(); return; }
+    if (action === 'reset-all-data'){ resetAllData(); return; }
     if (action === 'trigger-import'){
       var inputEl = document.getElementById('import-file-input');
       if (inputEl) inputEl.click();
