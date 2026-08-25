@@ -102,6 +102,7 @@
   .random-sep{color:var(--text-muted);font-size:13px;}
   .btn-gold.sm{margin-left:auto;padding:8px 16px;font-size:13px;border-radius:10px;}
   .random-result{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+  .random-result-open{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;}
   .random-result .info{min-width:0;flex:1;}
   .random-result .info p:first-child{font-family:var(--font-display);font-size:16px;margin:0;}
   .random-result .info p:last-child{margin:2px 0 0;color:var(--text-muted);font-size:12px;}
@@ -117,18 +118,24 @@
   /* chords & lyrics */
   .chords-list{margin-top:20px;display:flex;flex-direction:column;gap:10px;}
   .chord-song-row{
-    display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;
-    padding:14px 16px;border:1px solid var(--border);border-radius:16px;
-    background:var(--surface);text-align:left;transition:background .15s;
+    display:flex;align-items:center;gap:8px;width:100%;
+    border:1px solid var(--border);border-radius:16px;
+    background:var(--surface);transition:background .15s;
   }
   .chord-song-row:hover{background:var(--surface-hover);}
+  .chord-song-open{
+    flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+    padding:14px 4px 14px 16px;text-align:left;
+  }
   .chord-song-row .title{font-family:var(--font-display);font-size:15px;max-width:100%;}
   .chord-song-row .artist{font-size:12px;color:var(--text-muted);max-width:100%;}
+  .chord-fav-btn{flex-shrink:0;padding:10px 14px 10px 6px;display:flex;align-items:center;}
   .chord-editor-head{display:flex;align-items:center;gap:10px;margin-top:20px;}
   .chord-back-btn{
     flex-shrink:0;width:34px;height:34px;border-radius:10px;border:1px solid var(--border);
     display:flex;align-items:center;justify-content:center;background:var(--surface);
   }
+  .chord-back-btn.active{border-color:var(--gold);background:rgba(203,161,53,0.12);}
   .chord-editor-title{font-family:var(--font-display);font-size:18px;flex:1;min-width:0;margin:0;}
   .chord-editor-hint{margin:12px 0 0;color:var(--text-muted);font-size:12px;line-height:1.7;}
   .chord-editor-wrap{margin-top:12px;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface);}
@@ -139,6 +146,7 @@
   }
   .chord-textarea::placeholder{color:var(--text-muted);}
   .chord-textarea.expanded{min-height:78vh;}
+  .chord-textarea.locked{background:rgba(203,161,53,0.05);color:var(--text-muted);}
 
   .chev{transition:transform .15s;transform:rotate(0deg);flex-shrink:0;}
   .chev.collapsed{transform:rotate(-90deg);}
@@ -162,6 +170,8 @@
 
   .song-card-detail{padding:0 16px 18px;}
   .song-stats{margin-top:0;display:flex;flex-direction:column;gap:6px;}
+  .stat-divider{margin:10px 0 6px;padding-top:8px;border-top:1px dashed var(--border);}
+  .stat-divider span{color:var(--text-muted);font-size:10.5px;letter-spacing:0.03em;}
   .stat-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .stat-row .stat-label{color:var(--text-muted);font-size:12px;}
   .stat-value{display:flex;align-items:center;gap:8px;}
@@ -360,6 +370,12 @@
     },
     collapse: function(size, color){
       return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 9 9 9 9 4"/><polyline points="20 15 15 15 15 20"/><line x1="9" y1="9" x2="3" y2="3"/><line x1="15" y1="15" x2="21" y2="21"/></svg>';
+    },
+    lock: function(size, color){
+      return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+    },
+    unlock: function(size, color){
+      return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.8"/></svg>';
     }
   };
 
@@ -380,6 +396,7 @@
     expandedSongIds: {},
     chordSongId: null,
     chordDraft: null,
+    chordLockDraft: null,
     chordExpanded: false,
     toastMsg: null,
     randomFrom: 'S',
@@ -441,7 +458,7 @@
         var raw = storageGet('songs:slot' + i);
         var list = raw ? JSON.parse(raw) : [];
         var total = list.reduce(function(sum, s){
-          return sum + (s.chords||0) + (s.stroke||0) + (s.rhythm||0) + (s.arpeggio||0);
+          return sum + (s.chords||0) + (s.stroke||0) + (s.rhythm||0);
         }, 0);
         entry = { name: profileDisplayName(i), total: total, songCount: list.length };
       } catch(e){ entry = { name: profileDisplayName(i), total: 0, songCount: 0 }; }
@@ -562,11 +579,12 @@
     showSaveToast();
     render();
   }
-  function updateSongChordText(songId, text){
+  function updateSongChordText(songId, text, locked){
     var next = state.songs.map(function(s){
       if (s.id !== songId) return s;
       var copy = {}; for (var k in s) copy[k] = s[k];
       copy.lyricsChords = text;
+      copy.chordLocked = locked;
       return copy;
     });
     persistSongs(next);
@@ -681,7 +699,9 @@
       return '<div class="song-card">' + top + '</div>';
     }
     var statsHtml = CATEGORIES.map(function(c){
-      return '<div class="stat-row"><span class="stat-label">' + c.label + '</span>' +
+      var divider = (c.key === 'arpeggio') ? '<div class="stat-divider"><span>自己評価(ランキング対象外)</span></div>' : '';
+      return divider + '<div class="stat-row">' +
+        '<span class="stat-label">' + c.label + '</span>' +
         '<div class="stat-value"><span class="stat-level" style="color:' + (song[c.key] ? COLORS.gold : COLORS.textMuted) + '">' + levelName(song[c.key]) + '</span>' +
         renderStarInput(song[c.key], 16, 'data-action="card-rate" data-id="' + song.id + '" data-key="' + c.key + '"') +
         '</div></div>';
@@ -761,8 +781,11 @@
 
     var randomResult = '';
     if (state.randomPick){
-      randomResult = '<div class="random-result">' + renderRankBadge(state.randomPick.difficulty, 40) +
+      randomResult = '<div class="random-result">' +
+        '<button class="random-result-open" data-action="open-chord-from-random" data-id="' + state.randomPick.id + '" aria-label="コードを拡大表示で開く" title="コードを拡大表示で開く">' +
+        renderRankBadge(state.randomPick.difficulty, 40) +
         '<div class="info"><p class="truncate">' + escapeHtml(state.randomPick.title) + '</p><p class="truncate">' + escapeHtml(state.randomPick.artist) + '</p></div>' +
+        '</button>' +
         '<a class="yt-pill" href="' + youtubeSearchUrl(state.randomPick.title) + '" target="_blank" rel="noopener noreferrer">' + ICONS.play(15, COLORS.gold) + '<span>参考音源</span></a></div>';
     } else if (state.randomEmpty){
       randomResult = '<p class="random-empty">この範囲に登録されている曲がありません</p>';
@@ -805,29 +828,43 @@
         return '<div class="list-empty"><p>まだ曲が登録されていません</p>' +
           '<p>曲が登録されると、ここでコードと歌詞を書き込めます</p></div>';
       }
-      var rows = state.songs.map(function(s){
-        return '<button class="chord-song-row" data-action="open-chord-song" data-id="' + s.id + '">' +
+      var sorted = state.songs.slice().sort(function(a, b){
+        var af = a.chordFav ? 1 : 0, bf = b.chordFav ? 1 : 0;
+        if (af !== bf) return bf - af;
+        return a.title.localeCompare(b.title, 'ja');
+      });
+      var rows = sorted.map(function(s){
+        return '<div class="chord-song-row">' +
+          '<button class="chord-song-open" data-action="open-chord-song" data-id="' + s.id + '">' +
           '<span class="title truncate">' + escapeHtml(s.title) + '</span>' +
           '<span class="artist truncate">' + escapeHtml(s.artist || '') + '</span>' +
-          '</button>';
+          '</button>' +
+          '<button class="chord-fav-btn" data-action="toggle-chord-fav" data-id="' + s.id + '" aria-label="おすすめ設定" title="おすすめ設定">' +
+          ICONS.star(20, s.chordFav ? COLORS.gold : COLORS.border, !!s.chordFav) +
+          '</button>' +
+          '</div>';
       }).join('');
       return '<div class="chords-list">' + rows + '</div>';
     }
     var song = null;
     for (var i = 0; i < state.songs.length; i++) if (state.songs[i].id === state.chordSongId) song = state.songs[i];
-    if (!song){ state.chordSongId = null; state.chordDraft = null; state.chordExpanded = false; return renderChordsTab(); }
+    if (!song){ state.chordSongId = null; state.chordDraft = null; state.chordLockDraft = null; state.chordExpanded = false; return renderChordsTab(); }
     if (state.chordDraft === null) state.chordDraft = song.lyricsChords || '';
+    if (state.chordLockDraft === null) state.chordLockDraft = !!song.chordLocked;
     var expanded = state.chordExpanded;
+    var locked = state.chordLockDraft;
     var placeholder = 'C           G           Am          F\nここに歌詞を入力していきます';
     return '<div class="chord-editor-head">' +
       '<button class="chord-back-btn" data-action="close-chord-song" aria-label="曲一覧に戻る">' + ICONS.back(16, COLORS.textMuted) + '</button>' +
       '<h2 class="chord-editor-title truncate">' + escapeHtml(song.title) + '</h2>' +
+      '<button class="chord-back-btn' + (locked ? ' active' : '') + '" data-action="toggle-chord-lock" aria-label="' + (locked ? '固定を解除' : '固定') + '" title="' + (locked ? '固定を解除' : '固定') + '">' +
+      (locked ? ICONS.lock(16, COLORS.gold) : ICONS.unlock(16, COLORS.textMuted)) + '</button>' +
       '<button class="chord-back-btn" data-action="toggle-chord-expand" aria-label="' + (expanded ? '縮小' : '拡大') + '" title="' + (expanded ? '縮小' : '拡大') + '">' +
       (expanded ? ICONS.collapse(16, COLORS.textMuted) : ICONS.expand(16, COLORS.textMuted)) + '</button>' +
       '<button class="chord-back-btn" data-action="clear-chord-text" aria-label="テキストをクリア" title="テキストをクリア">' + ICONS.trash(16, COLORS.textMuted) + '</button>' +
       '</div>' +
-      (expanded ? '' : '<p class="chord-editor-hint">1行目にコード、2行目に歌詞を書くと位置が揃います。書き終えたら下の「保存」を押してください。</p>') +
-      '<div class="chord-editor-wrap' + (expanded ? ' expanded' : '') + '"><textarea id="chord-textarea" class="chord-textarea' + (expanded ? ' expanded' : '') + '" spellcheck="false" placeholder="' + escapeHtml(placeholder) + '">' + escapeHtml(state.chordDraft) + '</textarea></div>' +
+      (expanded ? '' : '<p class="chord-editor-hint">' + (locked ? '固定中はテキストを編集できません。鍵アイコンで解除できます。' : '1行目にコード、2行目に歌詞を書くと位置が揃います。書き終えたら下の「保存」を押してください。') + '</p>') +
+      '<div class="chord-editor-wrap' + (expanded ? ' expanded' : '') + '"><textarea id="chord-textarea" class="chord-textarea' + (expanded ? ' expanded' : '') + (locked ? ' locked' : '') + '" spellcheck="false"' + (locked ? ' readonly' : '') + ' placeholder="' + escapeHtml(placeholder) + '">' + escapeHtml(state.chordDraft) + '</textarea></div>' +
       '<button class="btn-gold save-all-btn" data-action="save-chord-text" data-id="' + song.id + '">' + ICONS.check(16, COLORS.bg) + '<span>保存</span></button>';
   }
 
@@ -852,7 +889,9 @@
       return '<button type="button" class="diff-btn' + (active?' active':'') + '" data-action="form-difficulty" data-rank="' + r.key + '" title="' + r.label + '" style="' + (active ? ('border-color:'+r.color+';background:'+r.color) : '') + '">' + r.key + '</button>';
     }).join('');
     var starFields = CATEGORIES.map(function(c){
-      return '<div class="form-star-row"><span class="cat-label">' + c.label + '</span>' +
+      var divider = (c.key === 'arpeggio') ? '<div class="stat-divider"><span>自己評価(ランキング対象外)</span></div>' : '';
+      return divider + '<div class="form-star-row">' +
+        '<span class="cat-label">' + c.label + '</span>' +
         '<div class="right"><span class="level" style="color:' + (fd[c.key] ? COLORS.gold : COLORS.textMuted) + '">' + levelName(fd[c.key]) + '</span>' +
         renderStarInput(fd[c.key], 22, 'data-action="form-rate" data-key="' + c.key + '"') + '</div></div>';
     }).join('');
@@ -973,11 +1012,23 @@
     if (action === 'set-tab'){ setActiveTab(target.dataset.tab); return; }
     if (action === 'toggle-rank'){ toggleRank(target.dataset.key); return; }
     if (action === 'toggle-song'){ toggleSongExpand(target.dataset.id); return; }
-    if (action === 'open-chord-song'){ state.chordSongId = target.dataset.id; state.chordDraft = null; state.chordExpanded = false; render(); return; }
-    if (action === 'close-chord-song'){ state.chordSongId = null; state.chordDraft = null; state.chordExpanded = false; render(); return; }
+    if (action === 'open-chord-song'){ state.chordSongId = target.dataset.id; state.chordDraft = null; state.chordLockDraft = null; state.chordExpanded = false; render(); return; }
+    if (action === 'toggle-chord-fav'){
+      var favId = target.dataset.id;
+      persistSongs(state.songs.map(function(s){
+        if (s.id !== favId) return s;
+        var copy = {}; for (var k in s) copy[k] = s[k];
+        copy.chordFav = !copy.chordFav;
+        return copy;
+      }));
+      render();
+      return;
+    }
+    if (action === 'close-chord-song'){ state.chordSongId = null; state.chordDraft = null; state.chordLockDraft = null; state.chordExpanded = false; render(); return; }
     if (action === 'clear-chord-text'){ state.chordDraft = ''; render(); return; }
     if (action === 'toggle-chord-expand'){ state.chordExpanded = !state.chordExpanded; render(); return; }
-    if (action === 'save-chord-text'){ updateSongChordText(target.dataset.id, state.chordDraft); showSaveToast(); render(); return; }
+    if (action === 'save-chord-text'){ updateSongChordText(target.dataset.id, state.chordDraft, state.chordLockDraft); showSaveToast(); render(); return; }
+    if (action === 'toggle-chord-lock'){ state.chordLockDraft = !state.chordLockDraft; render(); return; }
     if (action === 'save-all'){ persistSongs(state.songs); showSaveToast(); render(); return; }
     if (action === 'export-data'){ exportAllData(); return; }
     if (action === 'trigger-import'){
@@ -986,6 +1037,15 @@
       return;
     }
     if (action === 'pick-random'){ pickRandomSong(); return; }
+    if (action === 'open-chord-from-random'){
+      state.activeTab = 'chords';
+      state.chordSongId = target.dataset.id;
+      state.chordDraft = null;
+      state.chordLockDraft = null;
+      state.chordExpanded = true;
+      render();
+      return;
+    }
     if (action === 'edit-song'){
       var song = null;
       for (var i=0;i<state.songs.length;i++) if (state.songs[i].id === target.dataset.id) song = state.songs[i];
