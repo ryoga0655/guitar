@@ -396,6 +396,7 @@
     chordSongId: null,
     chordDraft: null,
     chordLockDraft: null,
+    chordQuery: '',
     chordExpanded: false,
     toastMsg: null,
     randomFrom: 'S',
@@ -827,23 +828,31 @@
         return '<div class="list-empty"><p>まだ曲が登録されていません</p>' +
           '<p>曲が登録されると、ここでコードと歌詞を書き込めます</p></div>';
       }
-      var sorted = state.songs.slice().sort(function(a, b){
+      var q = normalizeSearch(state.chordQuery.trim());
+      var sorted = state.songs.filter(function(s){
+        if (!q) return true;
+        return normalizeSearch(s.title).indexOf(q) >= 0 || normalizeSearch(s.artist || '').indexOf(q) >= 0;
+      }).sort(function(a, b){
         var af = a.chordFav ? 1 : 0, bf = b.chordFav ? 1 : 0;
         if (af !== bf) return bf - af;
         return a.title.localeCompare(b.title, 'ja');
       });
-      var rows = sorted.map(function(s){
-        return '<div class="chord-song-row">' +
-          '<button class="chord-song-open" data-action="open-chord-song" data-id="' + s.id + '">' +
-          '<span class="title truncate">' + escapeHtml(s.title) + '</span>' +
-          '<span class="artist truncate">' + escapeHtml(s.artist || '') + '</span>' +
-          '</button>' +
-          '<button class="chord-fav-btn" data-action="toggle-chord-fav" data-id="' + s.id + '" aria-label="おすすめ設定" title="おすすめ設定">' +
-          ICONS.star(20, s.chordFav ? COLORS.gold : COLORS.border, !!s.chordFav) +
-          '</button>' +
-          '</div>';
-      }).join('');
-      return '<div class="chords-list">' + rows + '</div>';
+      var searchBox = '<div class="search-box">' + ICONS.search(16, COLORS.textMuted) +
+        '<input id="chord-search-input" value="' + escapeHtml(state.chordQuery) + '" placeholder="曲名・アーティストで検索"></div>';
+      var rows = sorted.length === 0
+        ? '<p class="random-empty">一致する曲が見つかりません</p>'
+        : sorted.map(function(s){
+          return '<div class="chord-song-row">' +
+            '<button class="chord-song-open" data-action="open-chord-song" data-id="' + s.id + '">' +
+            '<span class="title truncate">' + escapeHtml(s.title) + '</span>' +
+            '<span class="artist truncate">' + escapeHtml(s.artist || '') + '</span>' +
+            '</button>' +
+            '<button class="chord-fav-btn" data-action="toggle-chord-fav" data-id="' + s.id + '" aria-label="おすすめ設定" title="おすすめ設定">' +
+            ICONS.star(20, s.chordFav ? COLORS.gold : COLORS.border, !!s.chordFav) +
+            '</button>' +
+            '</div>';
+        }).join('');
+      return searchBox + '<div class="chords-list">' + rows + '</div>';
     }
     var song = null;
     for (var i = 0; i < state.songs.length; i++) if (state.songs[i].id === state.chordSongId) song = state.songs[i];
@@ -1081,6 +1090,7 @@
   function handleTextInput(e){
     var id = e.target.id;
     if (id === 'search-input'){ state.query = e.target.value; renderPreserveFocus(); }
+    else if (id === 'chord-search-input'){ state.chordQuery = e.target.value; renderPreserveFocus(); }
     else if (id === 'form-title'){ state.formData.title = e.target.value; renderPreserveFocus(); }
     else if (id === 'form-artist'){ state.formData.artist = e.target.value; renderPreserveFocus(); }
     else if (id === 'form-genre'){ state.formData.genre = e.target.value; renderPreserveFocus(); }
