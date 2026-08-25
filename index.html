@@ -36,6 +36,7 @@
   :focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px;}
 
   .shell{max-width:900px;margin:0 auto;padding:28px 16px 110px;}
+  .shell.no-header{padding-top:12px;}
 
   /* header */
   .app-header{display:flex;align-items:flex-start;gap:12px;}
@@ -896,12 +897,15 @@
 
   function render(){
     var hasProfile = state.profileIndex !== null;
-    var html = '<div class="shell">';
-    html += '<header class="app-header"><div class="pick-wrap">' + ICONS.pick(36, COLORS.gold) + '</div>' +
-      '<div class="head-text"><h1 class="app-title truncate">' + (hasProfile ? escapeHtml(profileDisplayName(state.profileIndex)) + 'の弾き込みノート' : '弾き込みノート') + '</h1>' +
-      '<p class="app-sub">曲ごとの弾き込み具合を、コード・ストローク・リズム・アルペジオの4視点で記録する</p>' +
-      (state.profileLoaded && hasProfile ? '<button class="switch-link" data-action="switch-profile-open">' + ICONS.pencil(12, COLORS.gold) + '<span>ユーザーを切り替え</span></button>' : '') +
-      '</div></header>';
+    var chordFullscreen = state.activeTab === 'chords' && !!state.chordSongId && state.chordExpanded;
+    var html = '<div class="shell' + (chordFullscreen ? ' no-header' : '') + '">';
+    if (!chordFullscreen){
+      html += '<header class="app-header"><div class="pick-wrap">' + ICONS.pick(36, COLORS.gold) + '</div>' +
+        '<div class="head-text"><h1 class="app-title truncate">' + (hasProfile ? escapeHtml(profileDisplayName(state.profileIndex)) + 'の弾き込みノート' : '弾き込みノート') + '</h1>' +
+        '<p class="app-sub">曲ごとの弾き込み具合を、コード・ストローク・リズム・アルペジオの4視点で記録する</p>' +
+        (state.profileLoaded && hasProfile ? '<button class="switch-link" data-action="switch-profile-open">' + ICONS.pencil(12, COLORS.gold) + '<span>ユーザーを切り替え</span></button>' : '') +
+        '</div></header>';
+    }
 
     if (!state.profileLoaded){
       html += '<p class="loading-text">読み込み中...</p>';
