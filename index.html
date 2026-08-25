@@ -171,7 +171,6 @@
   .song-card-detail{padding:0 16px 18px;}
   .song-stats{margin-top:0;display:flex;flex-direction:column;gap:6px;}
   .stat-divider{margin:10px 0 6px;padding-top:8px;border-top:1px dashed var(--border);}
-  .stat-divider span{color:var(--text-muted);font-size:10.5px;letter-spacing:0.03em;}
   .stat-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .stat-row .stat-label{color:var(--text-muted);font-size:12px;}
   .stat-value{display:flex;align-items:center;gap:8px;}
@@ -684,7 +683,7 @@
 
   function renderSongCard(song){
     var expanded = !!state.expandedSongIds[song.id];
-    var mastery = Math.round(((song.chords + song.stroke + song.rhythm + song.arpeggio) / 20) * 100);
+    var mastery = Math.round(((song.chords + song.stroke + song.rhythm) / 15) * 100);
     var confirming = state.confirmDeleteId === song.id;
     var top = '<button class="song-card-top" data-action="toggle-song" data-id="' + song.id + '">' +
       renderRankBadge(song.difficulty, 36) +
@@ -699,7 +698,7 @@
       return '<div class="song-card">' + top + '</div>';
     }
     var statsHtml = CATEGORIES.map(function(c){
-      var divider = (c.key === 'arpeggio') ? '<div class="stat-divider"><span>自己評価(ランキング対象外)</span></div>' : '';
+      var divider = (c.key === 'arpeggio') ? '<div class="stat-divider"></div>' : '';
       return divider + '<div class="stat-row">' +
         '<span class="stat-label">' + c.label + '</span>' +
         '<div class="stat-value"><span class="stat-level" style="color:' + (song[c.key] ? COLORS.gold : COLORS.textMuted) + '">' + levelName(song[c.key]) + '</span>' +
@@ -889,7 +888,7 @@
       return '<button type="button" class="diff-btn' + (active?' active':'') + '" data-action="form-difficulty" data-rank="' + r.key + '" title="' + r.label + '" style="' + (active ? ('border-color:'+r.color+';background:'+r.color) : '') + '">' + r.key + '</button>';
     }).join('');
     var starFields = CATEGORIES.map(function(c){
-      var divider = (c.key === 'arpeggio') ? '<div class="stat-divider"><span>自己評価(ランキング対象外)</span></div>' : '';
+      var divider = (c.key === 'arpeggio') ? '<div class="stat-divider"></div>' : '';
       return divider + '<div class="form-star-row">' +
         '<span class="cat-label">' + c.label + '</span>' +
         '<div class="right"><span class="level" style="color:' + (fd[c.key] ? COLORS.gold : COLORS.textMuted) + '">' + levelName(fd[c.key]) + '</span>' +
