@@ -57,8 +57,17 @@
     display:flex;align-items:center;justify-content:center;
     font-family:var(--font-display);font-size:17px;font-weight:700;
   }
-  .profile-list-name{flex:1;text-align:left;font-family:var(--font-display);font-size:16px;}
-  .profile-check{flex-shrink:0;display:flex;}
+  .profile-name-input{
+    flex:1;min-width:0;background:transparent;border:none;border-bottom:1px solid var(--border);
+    color:var(--text);font-family:var(--font-display);font-size:16px;padding:4px 0;outline:none;
+  }
+  .profile-name-input:focus{border-bottom-color:var(--gold);}
+  .profile-name-input::placeholder{color:var(--text-muted);}
+  .profile-switch-btn{
+    flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    padding:7px 12px;border-radius:8px;border:1px solid var(--border);color:var(--text-muted);font-size:11px;
+  }
+  .profile-switch-btn.active{border-color:transparent;padding:7px;}
   .loading-text{margin-top:36px;color:var(--text-muted);}
 
   /* toolbar */
@@ -248,8 +257,8 @@
     { key:'rhythm', label:'リズム' },
     { key:'arpeggio', label:'アルペジオ' },
   ];
-  var PROFILES = ['ゆうこ','なつか','りょうが'];
-  var PROFILE_COLORS = { 'ゆうこ':'#9B5DE5', 'なつか':'#C1443A', 'りょうが':'#4E9B5C' };
+  var PROFILE_COUNT = 3;
+  var PROFILE_COLORS = ['#9B5DE5', '#C1443A', '#4E9B5C'];
   var LEVEL_NAMES = ['みならい','初級','中級','上級','達人'];
   var OLLIES_CHANNEL_HANDLE = 'olliesdaigo';
 
@@ -332,7 +341,8 @@
 
   var state = {
     songs: [],
-    profileName: null,
+    profileIndex: null,
+    profileNames: ['', '', ''],
     profileLoaded: false,
     switchingProfile: false,
     activeTab: 'home',
@@ -354,10 +364,17 @@
     ranking: [],
   };
 
-  function loadSongsForProfile(name){
+  // Slots are identified by a fixed index, never by the name typed into
+  // them, so renaming a slot never loses or moves its saved songs.
+  function profileDisplayName(idx){
+    var nm = state.profileNames[idx];
+    return (nm && nm.trim()) ? nm : ('ユーザー' + (idx + 1));
+  }
+
+  function loadSongsForProfile(idx){
     var existing = [];
     try {
-      var raw = storageGet('songs:' + name);
+      var raw = storageGet('songs:slot' + idx);
       existing = raw ? JSON.parse(raw) : [];
     } catch(e){ existing = []; }
     var existingIds = {};
@@ -369,34 +386,42 @@
     });
     var merged = existing.concat(toAdd);
     state.songs = merged;
-    if (toAdd.length > 0) storageSet('songs:' + name, JSON.stringify(merged));
+    if (toAdd.length > 0) storageSet('songs:slot' + idx, JSON.stringify(merged));
   }
 
   function persistSongs(next){
     state.songs = next;
-    if (!state.profileName) return;
-    storageSet('songs:' + state.profileName, JSON.stringify(next));
+    if (state.profileIndex === null) return;
+    storageSet('songs:slot' + state.profileIndex, JSON.stringify(next));
   }
 
-  function selectProfile(name){
-    state.profileName = name;
+  function selectProfile(idx){
+    state.profileIndex = idx;
     state.switchingProfile = false;
-    loadSongsForProfile(name);
-    storageSet('currentProfile', name);
+    loadSongsForProfile(idx);
+    storageSet('currentProfileIndex', String(idx));
     render();
   }
 
+  function renameProfile(idx, name){
+    state.profileNames[idx] = name;
+    storageSet('profileNames', JSON.stringify(state.profileNames));
+  }
+
   function loadRanking(){
-    var results = PROFILES.map(function(name){
+    var results = [];
+    for (var i = 0; i < PROFILE_COUNT; i++){
+      var entry;
       try {
-        var raw = storageGet('songs:' + name);
+        var raw = storageGet('songs:slot' + i);
         var list = raw ? JSON.parse(raw) : [];
         var total = list.reduce(function(sum, s){
           return sum + (s.chords||0) + (s.stroke||0) + (s.rhythm||0) + (s.arpeggio||0);
         }, 0);
-        return { name: name, total: total, songCount: list.length };
-      } catch(e){ return { name: name, total: 0, songCount: 0 }; }
-    });
+        entry = { name: profileDisplayName(i), total: total, songCount: list.length };
+      } catch(e){ entry = { name: profileDisplayName(i), total: 0, songCount: 0 }; }
+      results.push(entry);
+    }
     results.sort(function(a,b){ return b.total - a.total; });
     state.ranking = results;
   }
@@ -497,7 +522,7 @@
   }
   var toastTimerId = null;
   function showSaveToast(){
-    state.toastMsg = state.profileName ? state.profileName + 'として保存しました' : '保存しました';
+    state.toastMsg = state.profileIndex !== null ? profileDisplayName(state.profileIndex) + 'として保存しました' : '保存しました';
     clearTimeout(toastTimerId);
     toastTimerId = setTimeout(function(){ state.toastMsg = null; render(); }, 1300);
   }
@@ -741,30 +766,36 @@
 
   function renderProfileModal(){
     if (!state.switchingProfile) return '';
-    var rows = PROFILES.map(function(name){
-      var active = name === state.profileName;
-      var color = PROFILE_COLORS[name] || COLORS.gold;
-      return '<button class="profile-list-row' + (active?' active':'') + '" data-action="select-profile" data-name="' + escapeHtml(name) + '">' +
-        '<span class="profile-avatar" style="background:' + color + '22;border-color:' + color + ';color:' + color + '">' + escapeHtml(name.charAt(0)) + '</span>' +
-        '<span class="profile-list-name">' + escapeHtml(name) + '</span>' +
-        (active ? '<span class="profile-check">' + ICONS.check(18, color) + '</span>' : '') +
-        '</button>';
-    }).join('');
+    var rows = '';
+    for (var i = 0; i < PROFILE_COUNT; i++){
+      var active = i === state.profileIndex;
+      var color = PROFILE_COLORS[i];
+      var nm = state.profileNames[i] || '';
+      var initial = nm ? escapeHtml(nm.charAt(0)) : String(i + 1);
+      rows += '<div class="profile-list-row' + (active ? ' active' : '') + '">' +
+        '<span class="profile-avatar" style="background:' + color + '22;border-color:' + color + ';color:' + color + '">' + initial + '</span>' +
+        '<input type="text" class="profile-name-input" id="profile-name-' + i + '" data-idx="' + i + '" value="' + escapeHtml(nm) + '" placeholder="ユーザー' + (i + 1) + '" maxlength="10">' +
+        '<button type="button" class="profile-switch-btn' + (active ? ' active' : '') + '" data-action="select-profile" data-idx="' + i + '" aria-label="このユーザーに切り替え" title="このユーザーに切り替え">' +
+        (active ? ICONS.check(16, color) : '選択') +
+        '</button>' +
+        '</div>';
+    }
     return '<div class="modal-overlay" data-action="overlay-close" data-target="profile">' +
       '<div class="modal-sheet" data-stop="1">' +
       '<h2 class="modal-title" style="margin-bottom:4px">ユーザーを切り替え</h2>' +
-      '<p style="margin:0 0 16px;color:' + COLORS.textMuted + ';font-size:12px;">選んだ人ごとに記録が分かれています</p>' +
+      '<p style="margin:0 0 16px;color:' + COLORS.textMuted + ';font-size:12px;">名前を入力すると保存されます。名前ごとに記録が分かれています</p>' +
       '<div class="profile-list">' + rows + '</div>' +
-      '<button class="btn-outline" style="width:100%;margin-top:20px;padding:10px 0;border-radius:12px;" data-action="switch-profile-cancel">キャンセル</button>' +
+      '<button class="btn-outline" style="width:100%;margin-top:20px;padding:10px 0;border-radius:12px;" data-action="switch-profile-cancel">閉じる</button>' +
       '</div></div>';
   }
 
   function render(){
+    var hasProfile = state.profileIndex !== null;
     var html = '<div class="shell">';
     html += '<header class="app-header"><div class="pick-wrap">' + ICONS.pick(36, COLORS.gold) + '</div>' +
-      '<div class="head-text"><h1 class="app-title truncate">' + (state.profileName ? escapeHtml(state.profileName) + 'の弾き込みノート' : '弾き込みノート') + '</h1>' +
+      '<div class="head-text"><h1 class="app-title truncate">' + (hasProfile ? escapeHtml(profileDisplayName(state.profileIndex)) + 'の弾き込みノート' : '弾き込みノート') + '</h1>' +
       '<p class="app-sub">曲ごとの弾き込み具合を、コード・ストローク・リズム・アルペジオの4視点で記録する</p>' +
-      (state.profileLoaded && state.profileName ? '<button class="switch-link" data-action="switch-profile-open">' + ICONS.pencil(12, COLORS.gold) + '<span>ユーザーを切り替え</span></button>' : '') +
+      (state.profileLoaded && hasProfile ? '<button class="switch-link" data-action="switch-profile-open">' + ICONS.pencil(12, COLORS.gold) + '<span>ユーザーを切り替え</span></button>' : '') +
       '</div></header>';
 
     if (!state.profileLoaded){
@@ -778,7 +809,7 @@
     }
     html += '</div>';
 
-    if (state.profileLoaded && state.profileName){
+    if (state.profileLoaded && hasProfile){
       html += '<nav class="bottom-nav">' +
         '<button data-action="set-tab" data-tab="home">' + ICONS.home(20, state.activeTab==='home'?COLORS.gold:COLORS.textMuted) + '<span style="color:' + (state.activeTab==='home'?COLORS.gold:COLORS.textMuted) + '">ホーム</span></button>' +
         '<button data-action="set-tab" data-tab="chords">' + ICONS.note(20, state.activeTab==='chords'?COLORS.gold:COLORS.textMuted) + '<span style="color:' + (state.activeTab==='chords'?COLORS.gold:COLORS.textMuted) + '">コード</span></button>' +
@@ -821,7 +852,7 @@
     if (!target) return;
     var action = target.dataset.action;
 
-    if (action === 'select-profile'){ selectProfile(target.dataset.name); return; }
+    if (action === 'select-profile'){ selectProfile(parseInt(target.dataset.idx, 10)); return; }
     if (action === 'switch-profile-open'){ state.switchingProfile = true; render(); return; }
     if (action === 'switch-profile-cancel'){ state.switchingProfile = false; render(); return; }
     if (action === 'overlay-close'){
@@ -879,6 +910,10 @@
     else if (id === 'form-artist'){ state.formData.artist = e.target.value; renderPreserveFocus(); }
     else if (id === 'form-genre'){ state.formData.genre = e.target.value; renderPreserveFocus(); }
     else if (id === 'chord-textarea'){ state.chordDraft = e.target.value; renderPreserveFocus(); }
+    else if (e.target.classList.contains('profile-name-input')){
+      renameProfile(parseInt(e.target.dataset.idx, 10), e.target.value);
+      renderPreserveFocus();
+    }
   }
   app.addEventListener('compositionstart', function(){ isComposing = true; });
   app.addEventListener('compositionend', function(e){ isComposing = false; handleTextInput(e); });
@@ -895,11 +930,17 @@
   });
 
   (function init(){
-    var saved = storageGet('currentProfile');
-    var name = (saved && PROFILES.indexOf(saved) >= 0) ? saved : 'りょうが';
-    state.profileName = name;
-    loadSongsForProfile(name);
-    if (!saved) storageSet('currentProfile', name);
+    try {
+      var rawNames = storageGet('profileNames');
+      if (rawNames){
+        var parsed = JSON.parse(rawNames);
+        for (var i = 0; i < PROFILE_COUNT; i++) state.profileNames[i] = parsed[i] || '';
+      }
+    } catch(e){ /* keep default blank names */ }
+    var savedIdx = parseInt(storageGet('currentProfileIndex'), 10);
+    var idx = (savedIdx >= 0 && savedIdx < PROFILE_COUNT) ? savedIdx : 0;
+    state.profileIndex = idx;
+    loadSongsForProfile(idx);
     state.profileLoaded = true;
     render();
     // keep the from/to selects in sync with state after first render
