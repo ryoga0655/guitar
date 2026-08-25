@@ -42,12 +42,23 @@
   .app-sub{margin:6px 0 0;color:var(--text-muted);font-size:13px;line-height:1.6;}
   .switch-link{margin-top:8px;display:inline-flex;align-items:center;gap:5px;color:var(--gold);font-size:12px;padding:2px 0;}
 
-  /* profile picker */
-  .profile-row{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;}
-  .profile-btn{flex:1 1 100px;border:1px solid var(--border);border-radius:16px;padding:18px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--surface);transition:background .15s,border-color .15s;}
-  .profile-btn:hover{background:var(--surface-hover);}
-  .profile-btn.active{border-color:var(--gold);background:rgba(203,161,53,0.10);}
-  .profile-btn span{font-family:var(--font-display);font-size:15px;}
+  /* profile switcher */
+  .profile-list{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
+  .profile-list-row{
+    display:flex;align-items:center;gap:14px;width:100%;
+    padding:12px 14px;border:1px solid var(--border);border-radius:16px;
+    background:var(--surface);transition:background .15s,border-color .15s;
+    min-height:56px;
+  }
+  .profile-list-row:hover{background:var(--surface-hover);}
+  .profile-list-row.active{border-color:var(--gold);background:rgba(203,161,53,0.08);}
+  .profile-avatar{
+    flex-shrink:0;width:40px;height:40px;border-radius:50%;border:1.5px solid;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-size:17px;font-weight:700;
+  }
+  .profile-list-name{flex:1;text-align:left;font-family:var(--font-display);font-size:16px;}
+  .profile-check{flex-shrink:0;display:flex;}
   .loading-text{margin-top:36px;color:var(--text-muted);}
 
   /* toolbar */
@@ -61,6 +72,7 @@
   @media (min-width:640px){.select-field.sort{flex:none;width:128px;}}
   .btn-gold{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:12px;background:var(--gold);color:var(--bg);font-family:var(--font-display);font-weight:700;font-size:14px;white-space:nowrap;flex-shrink:0;}
   .btn-gold:hover{background:var(--gold-bright);}
+  .save-all-btn{width:100%;margin-top:24px;padding:14px;font-size:15px;}
 
   /* random pick card */
   .random-card{margin-top:16px;border:1px solid var(--border);border-radius:20px;padding:16px;background:var(--surface);}
@@ -82,26 +94,53 @@
   .list-empty p:first-child{font-family:var(--font-display);font-size:18px;margin:0;}
   .list-empty p:last-child{margin:8px 0 0;color:var(--text-muted);font-size:13px;}
 
+  /* chords & lyrics */
+  .chords-list{margin-top:20px;display:flex;flex-direction:column;gap:10px;}
+  .chord-song-row{
+    display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;
+    padding:14px 16px;border:1px solid var(--border);border-radius:16px;
+    background:var(--surface);text-align:left;transition:background .15s;
+  }
+  .chord-song-row:hover{background:var(--surface-hover);}
+  .chord-song-row .title{font-family:var(--font-display);font-size:15px;max-width:100%;}
+  .chord-song-row .artist{font-size:12px;color:var(--text-muted);max-width:100%;}
+  .chord-editor-head{display:flex;align-items:center;gap:10px;margin-top:20px;}
+  .chord-back-btn{
+    flex-shrink:0;width:34px;height:34px;border-radius:10px;border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;background:var(--surface);
+  }
+  .chord-editor-title{font-family:var(--font-display);font-size:18px;flex:1;min-width:0;margin:0;}
+  .chord-editor-hint{margin:12px 0 0;color:var(--text-muted);font-size:12px;line-height:1.7;}
+  .chord-editor-wrap{margin-top:12px;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .chord-textarea{
+    display:block;width:100%;min-height:40vh;border:none;background:transparent;color:var(--text);
+    font-family:var(--font-mono);font-size:15px;line-height:2;padding:16px;
+    outline:none;resize:vertical;overflow:auto;white-space:pre-wrap;word-break:break-word;
+  }
+  .chord-textarea::placeholder{color:var(--text-muted);}
+
+  .chev{transition:transform .15s;transform:rotate(0deg);flex-shrink:0;}
+  .chev.collapsed{transform:rotate(-90deg);}
+
   .rank-group{border:1px solid var(--border);border-radius:20px;overflow:hidden;}
   .rank-group-head{width:100%;display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);text-align:left;}
   .rank-group-head .name{font-family:var(--font-display);font-size:15px;}
   .rank-group-head .count{color:var(--text-muted);font-size:12px;font-family:var(--font-mono);}
-  .rank-group-head .chev{margin-left:auto;transform:rotate(0deg);}
-  .rank-group-head .chev.collapsed{transform:rotate(-90deg);}
-  .rank-group-body{padding:16px;display:grid;grid-template-columns:1fr;gap:16px;background:var(--bg);}
-  @media (min-width:640px){.rank-group-body{grid-template-columns:1fr 1fr;}}
-  @media (min-width:1024px){.rank-group-body{grid-template-columns:1fr 1fr 1fr;}}
+  .rank-group-head .chev{margin-left:auto;}
+  .rank-group-body{padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--bg);}
 
-  .song-card{position:relative;border:1px solid var(--border);border-radius:16px;padding:18px;background:var(--surface);}
-  .song-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
-  .song-card-info{min-width:0;}
-  .song-title{font-family:var(--font-display);font-size:17px;margin:0;}
-  .song-sub{margin:3px 0 0;color:var(--text-muted);font-size:13px;}
+  .song-card{position:relative;border:1px solid var(--border);border-radius:16px;background:var(--surface);overflow:hidden;}
+  .song-card-top{width:100%;display:flex;align-items:center;gap:10px;padding:14px 16px;text-align:left;}
+  .song-card-info{min-width:0;flex:1;}
+  .song-title{font-family:var(--font-display);font-size:15px;margin:0;}
+  .song-sub{margin:3px 0 0;color:var(--text-muted);font-size:12px;}
+  .mastery-pill{flex-shrink:0;color:var(--text-muted);font-size:11px;font-family:var(--font-mono);}
   .rank-badge{position:relative;flex-shrink:0;display:inline-block;}
   .rank-badge svg{display:block;}
   .rank-badge .label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:var(--bg);}
 
-  .song-stats{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+  .song-card-detail{padding:0 16px 18px;}
+  .song-stats{margin-top:0;display:flex;flex-direction:column;gap:6px;}
   .stat-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .stat-row .stat-label{color:var(--text-muted);font-size:12px;}
   .stat-value{display:flex;align-items:center;gap:8px;}
@@ -143,6 +182,13 @@
   .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:900;display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px);}
   .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;}
   .bottom-nav button span{font-size:11px;}
+
+  .save-toast{
+    position:fixed;left:50%;bottom:82px;transform:translateX(-50%);
+    background:var(--gold);color:var(--bg);font-family:var(--font-display);font-size:12px;
+    padding:8px 18px;border-radius:99px;box-shadow:0 6px 18px rgba(0,0,0,0.4);
+    z-index:1200;pointer-events:none;white-space:nowrap;
+  }
 
   /* modals */
   .modal-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,7,5,0.72);}
@@ -203,6 +249,7 @@
     { key:'arpeggio', label:'アルペジオ' },
   ];
   var PROFILES = ['ゆうこ','なつか','りょうが'];
+  var PROFILE_COLORS = { 'ゆうこ':'#9B5DE5', 'なつか':'#C1443A', 'りょうが':'#4E9B5C' };
   var LEVEL_NAMES = ['みならい','初級','中級','上級','達人'];
   var OLLIES_CHANNEL_HANDLE = 'olliesdaigo';
 
@@ -271,6 +318,15 @@
     },
     trophy: function(size, color){
       return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 5H4.5a2.2 2.2 0 0 0 0 4.4H6"/><path d="M17 5h2.5a2.2 2.2 0 0 1 0 4.4H17"/><path d="M9.5 14.2V16c0 .5-.4.9-.9 1.1C7.3 17.6 6.7 18.9 6.7 20"/><path d="M14.5 14.2V16c0 .5.4.9.9 1.1 1.3.5 1.9 1.8 1.9 2.9"/><path d="M5 20h14"/></svg>';
+    },
+    check: function(size, color){
+      return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>';
+    },
+    back: function(size, color){
+      return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
+    },
+    note: function(size, color){
+      return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
     }
   };
 
@@ -286,7 +342,11 @@
     editingSong: null,
     formData: null,
     confirmDeleteId: null,
-    collapsedRanks: {},
+    collapsedRanks: { S:true, A:true, B:true, C:true },
+    expandedSongIds: {},
+    chordSongId: null,
+    chordDraft: null,
+    toastMsg: null,
     randomFrom: 'S',
     randomTo: 'D',
     randomPick: null,
@@ -353,6 +413,12 @@
     render();
   }
 
+  function toggleSongExpand(id){
+    if (state.expandedSongIds[id]) delete state.expandedSongIds[id];
+    else state.expandedSongIds[id] = true;
+    render();
+  }
+
   function pickRandomSong(){
     var lo = Math.min(RANK_ORDER[state.randomFrom], RANK_ORDER[state.randomTo]);
     var hi = Math.max(RANK_ORDER[state.randomFrom], RANK_ORDER[state.randomTo]);
@@ -405,6 +471,7 @@
       id: base.id, createdAt: base.createdAt,
       title: fd.title.trim(), artist: fd.artist.trim(), genre: fd.genre.trim(),
       difficulty: fd.difficulty, chords: fd.chords, stroke: fd.stroke, rhythm: fd.rhythm, arpeggio: fd.arpeggio,
+      lyricsChords: base.lyricsChords || '',
     };
     handleSaveSong(payload);
   }
@@ -428,6 +495,12 @@
     state.confirmDeleteId = null;
     render();
   }
+  var toastTimerId = null;
+  function showSaveToast(){
+    state.toastMsg = state.profileName ? state.profileName + 'として保存しました' : '保存しました';
+    clearTimeout(toastTimerId);
+    toastTimerId = setTimeout(function(){ state.toastMsg = null; render(); }, 1300);
+  }
   function handleRateSong(songId, key, value){
     var next = state.songs.map(function(s){
       if (s.id !== songId) return s;
@@ -436,9 +509,18 @@
       return copy;
     });
     persistSongs(next);
+    showSaveToast();
     render();
   }
-
+  function updateSongChordText(songId, text){
+    var next = state.songs.map(function(s){
+      if (s.id !== songId) return s;
+      var copy = {}; for (var k in s) copy[k] = s[k];
+      copy.lyricsChords = text;
+      return copy;
+    });
+    persistSongs(next);
+  }
   function renderStarInput(value, size, dataAttrs){
     var html = '<div class="star-input">';
     for (var i = 1; i <= 5; i++){
@@ -460,8 +542,21 @@
   }
 
   function renderSongCard(song){
+    var expanded = !!state.expandedSongIds[song.id];
     var mastery = Math.round(((song.chords + song.stroke + song.rhythm + song.arpeggio) / 20) * 100);
     var confirming = state.confirmDeleteId === song.id;
+    var top = '<button class="song-card-top" data-action="toggle-song" data-id="' + song.id + '">' +
+      renderRankBadge(song.difficulty, 36) +
+      '<div class="song-card-info">' +
+      '<h3 class="song-title truncate">' + escapeHtml(song.title) + '</h3>' +
+      '<p class="song-sub truncate">' + escapeHtml(song.artist) + (song.genre ? ' ・ ' + escapeHtml(song.genre) : '') + '</p>' +
+      '</div>' +
+      '<span class="mastery-pill">' + mastery + '%</span>' +
+      '<span class="chev' + (expanded ? '' : ' collapsed') + '">' + ICONS.chevron(16, COLORS.textMuted) + '</span>' +
+      '</button>';
+    if (!expanded){
+      return '<div class="song-card">' + top + '</div>';
+    }
     var statsHtml = CATEGORIES.map(function(c){
       return '<div class="stat-row"><span class="stat-label">' + c.label + '</span>' +
         '<div class="stat-value"><span class="stat-level" style="color:' + (song[c.key] ? COLORS.gold : COLORS.textMuted) + '">' + levelName(song[c.key]) + '</span>' +
@@ -481,24 +576,31 @@
         '<button class="btn-outline" data-action="cancel-delete">キャンセル</button>' +
         '<button class="btn-danger" data-action="confirm-delete" data-id="' + song.id + '">削除</button></div>';
     }
-    return '<div class="song-card">' +
-      '<div class="song-card-top"><div class="song-card-info">' +
-      '<h3 class="song-title truncate">' + escapeHtml(song.title) + '</h3>' +
-      '<p class="song-sub truncate">' + escapeHtml(song.artist) + (song.genre ? ' ・ ' + escapeHtml(song.genre) : '') + '</p>' +
-      '</div>' + renderRankBadge(song.difficulty, 44) + '</div>' +
+    return '<div class="song-card expanded">' + top +
+      '<div class="song-card-detail">' +
       '<div class="song-stats">' + statsHtml + '</div>' +
       '<div class="mastery"><div class="mastery-track"><div class="mastery-fill" style="width:' + mastery + '%"></div></div>' +
       '<p class="mastery-label">習熟度 ' + mastery + '%</p></div>' +
-      actionsHtml + '</div>';
+      actionsHtml + '</div></div>';
   }
 
+  // Katakana -> hiragana so search doesn't care which kana the user or the
+  // song title happens to use (e.g. "かんとりーろーど" finds "カントリーロード").
+  function toHiragana(str){
+    return str.replace(/[ァ-ヶ]/g, function(ch){
+      return String.fromCharCode(ch.charCodeAt(0) - 0x60);
+    });
+  }
+  function normalizeSearch(str){
+    return toHiragana(String(str || '').toLowerCase());
+  }
   function getFiltered(){
-    var q = state.query.trim().toLowerCase();
+    var q = normalizeSearch(state.query.trim());
     return state.songs.filter(function(s){
       if (!q) return true;
-      return s.title.toLowerCase().indexOf(q) >= 0 ||
-        s.artist.toLowerCase().indexOf(q) >= 0 ||
-        (s.genre || '').toLowerCase().indexOf(q) >= 0;
+      return normalizeSearch(s.title).indexOf(q) >= 0 ||
+        normalizeSearch(s.artist).indexOf(q) >= 0 ||
+        normalizeSearch(s.genre || '').indexOf(q) >= 0;
     });
   }
 
@@ -519,7 +621,7 @@
     var listHtml;
     if (grouped.length === 0){
       listHtml = '<div class="list-empty"><p>' + (state.songs.length === 0 ? 'まだ曲が登録されていません' : '一致する曲が見つかりません') + '</p>' +
-        '<p>' + (state.songs.length === 0 ? '「曲を登録」から、弾いた曲とその仕上がりを記録しましょう' : '検索キーワードを変えてみてください') + '</p></div>';
+        '<p>' + (state.songs.length === 0 ? '曲が登録されると、ここに一覧が表示されます' : '検索キーワードを変えてみてください') + '</p></div>';
     } else {
       listHtml = grouped.map(function(g){
         var collapsed = !!state.collapsedRanks[g.rank.key];
@@ -553,7 +655,6 @@
       '<option value="new"' + (state.sortBy==='new'?' selected':'') + '>追加順</option>' +
       '<option value="name"' + (state.sortBy==='name'?' selected':'') + '>名前順</option>' +
       '</select>' +
-      '<button class="btn-gold" data-action="open-form">' + ICONS.plus(16, COLORS.bg) + '<span>曲を登録</span></button>' +
       '</div></div>' +
 
       '<div class="random-card"><div class="random-title">' + ICONS.shuffle(16, COLORS.gold) + '<span>今日の1曲をランダムに選ぶ</span></div>' +
@@ -564,7 +665,39 @@
       '<button class="btn-gold sm" data-action="pick-random">' + ICONS.shuffle(14, COLORS.bg) + '<span>選ぶ</span></button>' +
       '</div>' + randomResult + '</div>' +
 
-      '<div class="song-list">' + listHtml + '</div>';
+      '<div class="song-list">' + listHtml + '</div>' +
+
+      '<button class="btn-gold save-all-btn" data-action="save-all">' + ICONS.check(16, COLORS.bg) + '<span>すべて保存</span></button>';
+  }
+
+  function renderChordsTab(){
+    if (!state.chordSongId){
+      state.chordDraft = null;
+      if (state.songs.length === 0){
+        return '<div class="list-empty"><p>まだ曲が登録されていません</p>' +
+          '<p>曲が登録されると、ここでコードと歌詞を書き込めます</p></div>';
+      }
+      var rows = state.songs.map(function(s){
+        return '<button class="chord-song-row" data-action="open-chord-song" data-id="' + s.id + '">' +
+          '<span class="title truncate">' + escapeHtml(s.title) + '</span>' +
+          '<span class="artist truncate">' + escapeHtml(s.artist || '') + '</span>' +
+          '</button>';
+      }).join('');
+      return '<div class="chords-list">' + rows + '</div>';
+    }
+    var song = null;
+    for (var i = 0; i < state.songs.length; i++) if (state.songs[i].id === state.chordSongId) song = state.songs[i];
+    if (!song){ state.chordSongId = null; state.chordDraft = null; return renderChordsTab(); }
+    if (state.chordDraft === null) state.chordDraft = song.lyricsChords || '';
+    var placeholder = 'C           G           Am          F\nここに歌詞を入力していきます';
+    return '<div class="chord-editor-head">' +
+      '<button class="chord-back-btn" data-action="close-chord-song" aria-label="曲一覧に戻る">' + ICONS.back(16, COLORS.textMuted) + '</button>' +
+      '<h2 class="chord-editor-title truncate">' + escapeHtml(song.title) + '</h2>' +
+      '<button class="chord-back-btn" data-action="clear-chord-text" aria-label="テキストをクリア" title="テキストをクリア">' + ICONS.trash(16, COLORS.textMuted) + '</button>' +
+      '</div>' +
+      '<p class="chord-editor-hint">1行目にコード、2行目に歌詞を書くと位置が揃います。書き終えたら下の「保存」を押してください。</p>' +
+      '<div class="chord-editor-wrap"><textarea id="chord-textarea" class="chord-textarea" spellcheck="false" placeholder="' + escapeHtml(placeholder) + '">' + escapeHtml(state.chordDraft) + '</textarea></div>' +
+      '<button class="btn-gold save-all-btn" data-action="save-chord-text" data-id="' + song.id + '">' + ICONS.check(16, COLORS.bg) + '<span>保存</span></button>';
   }
 
   function renderRankingTab(){
@@ -608,16 +741,20 @@
 
   function renderProfileModal(){
     if (!state.switchingProfile) return '';
-    var buttons = PROFILES.map(function(name){
+    var rows = PROFILES.map(function(name){
       var active = name === state.profileName;
-      return '<button class="profile-btn' + (active?' active':'') + '" data-action="select-profile" data-name="' + escapeHtml(name) + '">' +
-        ICONS.pick(40, active ? COLORS.gold : COLORS.border) + '<span>' + escapeHtml(name) + '</span></button>';
+      var color = PROFILE_COLORS[name] || COLORS.gold;
+      return '<button class="profile-list-row' + (active?' active':'') + '" data-action="select-profile" data-name="' + escapeHtml(name) + '">' +
+        '<span class="profile-avatar" style="background:' + color + '22;border-color:' + color + ';color:' + color + '">' + escapeHtml(name.charAt(0)) + '</span>' +
+        '<span class="profile-list-name">' + escapeHtml(name) + '</span>' +
+        (active ? '<span class="profile-check">' + ICONS.check(18, color) + '</span>' : '') +
+        '</button>';
     }).join('');
     return '<div class="modal-overlay" data-action="overlay-close" data-target="profile">' +
       '<div class="modal-sheet" data-stop="1">' +
       '<h2 class="modal-title" style="margin-bottom:4px">ユーザーを切り替え</h2>' +
       '<p style="margin:0 0 16px;color:' + COLORS.textMuted + ';font-size:12px;">選んだ人ごとに記録が分かれています</p>' +
-      '<div class="profile-row">' + buttons + '</div>' +
+      '<div class="profile-list">' + rows + '</div>' +
       '<button class="btn-outline" style="width:100%;margin-top:20px;padding:10px 0;border-radius:12px;" data-action="switch-profile-cancel">キャンセル</button>' +
       '</div></div>';
   }
@@ -632,20 +769,28 @@
 
     if (!state.profileLoaded){
       html += '<p class="loading-text">読み込み中...</p>';
+    } else if (state.activeTab === 'home'){
+      html += renderHomeTab();
+    } else if (state.activeTab === 'chords'){
+      html += renderChordsTab();
     } else {
-      html += state.activeTab === 'home' ? renderHomeTab() : renderRankingTab();
+      html += renderRankingTab();
     }
     html += '</div>';
 
     if (state.profileLoaded && state.profileName){
       html += '<nav class="bottom-nav">' +
         '<button data-action="set-tab" data-tab="home">' + ICONS.home(20, state.activeTab==='home'?COLORS.gold:COLORS.textMuted) + '<span style="color:' + (state.activeTab==='home'?COLORS.gold:COLORS.textMuted) + '">ホーム</span></button>' +
+        '<button data-action="set-tab" data-tab="chords">' + ICONS.note(20, state.activeTab==='chords'?COLORS.gold:COLORS.textMuted) + '<span style="color:' + (state.activeTab==='chords'?COLORS.gold:COLORS.textMuted) + '">コード</span></button>' +
         '<button data-action="set-tab" data-tab="ranking">' + ICONS.trophy(20, state.activeTab==='ranking'?COLORS.gold:COLORS.textMuted) + '<span style="color:' + (state.activeTab==='ranking'?COLORS.gold:COLORS.textMuted) + '">ランキング</span></button>' +
         '</nav>';
     }
 
     html += renderFormModal();
     html += renderProfileModal();
+    if (state.toastMsg){
+      html += '<div class="save-toast">' + escapeHtml(state.toastMsg) + '</div>';
+    }
 
     document.getElementById('app').innerHTML = html;
   }
@@ -687,8 +832,13 @@
     }
     if (action === 'set-tab'){ setActiveTab(target.dataset.tab); return; }
     if (action === 'toggle-rank'){ toggleRank(target.dataset.key); return; }
+    if (action === 'toggle-song'){ toggleSongExpand(target.dataset.id); return; }
+    if (action === 'open-chord-song'){ state.chordSongId = target.dataset.id; state.chordDraft = null; render(); return; }
+    if (action === 'close-chord-song'){ state.chordSongId = null; state.chordDraft = null; render(); return; }
+    if (action === 'clear-chord-text'){ state.chordDraft = ''; render(); return; }
+    if (action === 'save-chord-text'){ updateSongChordText(target.dataset.id, state.chordDraft); showSaveToast(); render(); return; }
+    if (action === 'save-all'){ persistSongs(state.songs); showSaveToast(); render(); return; }
     if (action === 'pick-random'){ pickRandomSong(); return; }
-    if (action === 'open-form'){ openForm(null); return; }
     if (action === 'edit-song'){
       var song = null;
       for (var i=0;i<state.songs.length;i++) if (state.songs[i].id === target.dataset.id) song = state.songs[i];
@@ -717,12 +867,24 @@
     if (action === 'form-submit'){ submitForm(); return; }
   });
 
-  app.addEventListener('input', function(e){
+  // IME composition (日本語入力) fires multiple 'input' events while the text is
+  // still being converted. Re-rendering (which replaces the DOM node) on those
+  // intermediate events breaks the composition mid-keystroke, so we wait for
+  // 'compositionend' before applying the value while composing.
+  var isComposing = false;
+  function handleTextInput(e){
     var id = e.target.id;
     if (id === 'search-input'){ state.query = e.target.value; renderPreserveFocus(); }
     else if (id === 'form-title'){ state.formData.title = e.target.value; renderPreserveFocus(); }
     else if (id === 'form-artist'){ state.formData.artist = e.target.value; renderPreserveFocus(); }
     else if (id === 'form-genre'){ state.formData.genre = e.target.value; renderPreserveFocus(); }
+    else if (id === 'chord-textarea'){ state.chordDraft = e.target.value; renderPreserveFocus(); }
+  }
+  app.addEventListener('compositionstart', function(){ isComposing = true; });
+  app.addEventListener('compositionend', function(e){ isComposing = false; handleTextInput(e); });
+  app.addEventListener('input', function(e){
+    if (isComposing) return;
+    handleTextInput(e);
   });
 
   app.addEventListener('change', function(e){
