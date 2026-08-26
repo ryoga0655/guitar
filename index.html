@@ -275,6 +275,7 @@
     { key:'A', label:'練習', color:'#D98A3D' },
     { key:'B', label:'標準', color:'#CBA135' },
     { key:'C', label:'入門', color:'#6E9B7C' },
+    { key:'E', label:'初挑戦', color:'#8A7F73' },
     { key:'D', label:'簡単', color:'#5C84A6' },
   ];
   var RANK_ORDER = { S:0, A:1, B:2, C:3, D:4 };
@@ -290,6 +291,7 @@
   var OLLIES_CHANNEL_HANDLE = 'olliesdaigo';
 
   var SEED_SONGS = [
+    { id:'seed-kirakiraboshi', title:'きらきら星', artist:'童謡', genre:'童謡', difficulty:'E', chords:0, stroke:0, rhythm:0, arpeggio:0 },
     { id:'seed-marigold', title:'マリーゴールド', artist:'あいみょん', genre:'J-POP', difficulty:'B', chords:4, stroke:4, rhythm:3, arpeggio:2 },
     { id:'seed-aotonatsu', title:'青と夏', artist:'Mrs. GREEN APPLE', genre:'J-POP/ロック', difficulty:'S', chords:0, stroke:0, rhythm:0, arpeggio:0 },
     { id:'seed-ginnoryu', title:'銀の龍の背に乗って', artist:'中島みゆき', genre:'J-POP', difficulty:'S', chords:0, stroke:0, rhythm:0, arpeggio:0 },
@@ -403,7 +405,7 @@
     editingSong: null,
     formData: null,
     confirmDeleteId: null,
-    collapsedRanks: { S:true, A:true, B:true, C:true },
+    collapsedRanks: { S:true, A:true, B:true, C:true, E:true },
     expandedSongIds: {},
     chordSongId: null,
     chordDraft: null,
@@ -504,7 +506,7 @@
     var lo = Math.min(RANK_ORDER[state.randomFrom], RANK_ORDER[state.randomTo]);
     var hi = Math.max(RANK_ORDER[state.randomFrom], RANK_ORDER[state.randomTo]);
     var candidates = state.songs.filter(function(s){
-      return RANK_ORDER[s.difficulty] >= lo && RANK_ORDER[s.difficulty] <= hi;
+      return s.difficulty !== 'E' && RANK_ORDER[s.difficulty] >= lo && RANK_ORDER[s.difficulty] <= hi;
     });
     if (candidates.length === 0){
       state.randomPick = null;
@@ -696,9 +698,10 @@
     render();
   }
 
-  function renderStarInput(value, size, dataAttrs){
+  function renderStarInput(value, size, dataAttrs, max){
+    max = max || 5;
     var html = '<div class="star-input">';
-    for (var i = 1; i <= 5; i++){
+    for (var i = 1; i <= max; i++){
       var filled = i <= value;
       var nextVal = (i === value) ? 0 : i;
       html += '<button type="button" class="star-btn" ' + dataAttrs + ' data-value="' + nextVal + '" aria-label="' + LEVEL_NAMES[i-1] + '" title="' + LEVEL_NAMES[i-1] + '">' + ICONS.star(size, filled ? COLORS.gold : COLORS.border, filled) + '</button>';
@@ -732,12 +735,16 @@
     if (!expanded){
       return '<div class="song-card">' + top + '</div>';
     }
-    var statsHtml = CATEGORIES.map(function(c){
-      var divider = (c.key === 'arpeggio') ? '<div class="stat-divider"></div>' : '';
+    var isEasyRank = song.difficulty === 'E';
+    var starMax = isEasyRank ? 3 : 5;
+    var statsHtml = CATEGORIES.filter(function(c){
+      return !(isEasyRank && c.key === 'arpeggio');
+    }).map(function(c){
+      var divider = (!isEasyRank && c.key === 'arpeggio') ? '<div class="stat-divider"></div>' : '';
       return divider + '<div class="stat-row">' +
         '<span class="stat-label">' + c.label + '</span>' +
         '<div class="stat-value"><span class="stat-level" style="color:' + (song[c.key] ? COLORS.gold : COLORS.textMuted) + '">' + levelName(song[c.key]) + '</span>' +
-        renderStarInput(song[c.key], 16, 'data-action="card-rate" data-id="' + song.id + '" data-key="' + c.key + '"') +
+        renderStarInput(song[c.key], 16, 'data-action="card-rate" data-id="' + song.id + '" data-key="' + c.key + '"', starMax) +
         '</div></div>';
     }).join('');
     var actionsHtml;
@@ -826,7 +833,7 @@
       randomResult = '<p class="random-empty">この範囲に登録されている曲がありません</p>';
     }
 
-    var rankOptions = RANKS.map(function(r){ return '<option value="' + r.key + '">' + r.label + '(' + r.key + ')</option>'; }).join('');
+    var rankOptions = RANKS.filter(function(r){ return r.key !== 'E'; }).map(function(r){ return '<option value="' + r.key + '">' + r.label + '(' + r.key + ')</option>'; }).join('');
 
     return '<div class="toolbar">' +
       '<div class="search-box">' + ICONS.search(16, COLORS.textMuted) +
@@ -942,12 +949,16 @@
       var active = fd.difficulty === r.key;
       return '<button type="button" class="diff-btn' + (active?' active':'') + '" data-action="form-difficulty" data-rank="' + r.key + '" title="' + r.label + '" style="' + (active ? ('border-color:'+r.color+';background:'+r.color) : '') + '">' + r.key + '</button>';
     }).join('');
-    var starFields = CATEGORIES.map(function(c){
-      var divider = (c.key === 'arpeggio') ? '<div class="stat-divider"></div>' : '';
+    var fdEasyRank = fd.difficulty === 'E';
+    var fdStarMax = fdEasyRank ? 3 : 5;
+    var starFields = CATEGORIES.filter(function(c){
+      return !(fdEasyRank && c.key === 'arpeggio');
+    }).map(function(c){
+      var divider = (!fdEasyRank && c.key === 'arpeggio') ? '<div class="stat-divider"></div>' : '';
       return divider + '<div class="form-star-row">' +
         '<span class="cat-label">' + c.label + '</span>' +
         '<div class="right"><span class="level" style="color:' + (fd[c.key] ? COLORS.gold : COLORS.textMuted) + '">' + levelName(fd[c.key]) + '</span>' +
-        renderStarInput(fd[c.key], 22, 'data-action="form-rate" data-key="' + c.key + '"') + '</div></div>';
+        renderStarInput(fd[c.key], 22, 'data-action="form-rate" data-key="' + c.key + '"', fdStarMax) + '</div></div>';
     }).join('');
     return '<div class="modal-overlay" data-action="overlay-close" data-target="form">' +
       '<div class="modal-sheet" data-stop="1">' +
